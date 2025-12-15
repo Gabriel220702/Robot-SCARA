@@ -6,7 +6,8 @@
 
 ---
 
-## 📖 **Descripción del Proyecto** Este proyecto consiste en el diseño, construcción y control de un **Robot SCARA** (Selective Compliance Assembly Robot Arm) de configuración RRP. El sistema integra un **Gemelo Digital (Digital Twin)** que opera en tiempo real, permitiendo monitorear y controlar el robot físico desde una interfaz web.
+## 📖 **Descripción del Proyecto** 
+Este proyecto consiste en el diseño, construcción y control de un **Robot SCARA** (Selective Compliance Assembly Robot Arm) de configuración RRP. El sistema integra un **Gemelo Digital (Digital Twin)** que opera en tiempo real, permitiendo monitorear y controlar el robot físico desde una interfaz web.
 
 Es una implementación completa de **Industria 4.0**, combinando diseño mecánico (CAD/CAM), cinemática avanzada, electrónica de potencia y arquitectura IoT Cliente-Servidor.
 
