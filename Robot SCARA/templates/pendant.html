@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=0.9, user-scalable=yes">
+    <title>Teach Pendant V2</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- ESTILOS (Mismos que tu versión anterior) --- */
+        body {
+            background-color: #121212;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            margin: 0;
+            font-family: sans-serif;
+            overflow-y: auto; 
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            padding-top: 20px; 
+            padding-bottom: 50px;
+        }
+
+        .pendant-case {
+            width: 90%; 
+            max-width: 380px; 
+            height: auto; 
+            min-height: 700px; 
+            background-color: #3a3a3c;
+            border-radius: 30px;
+            box-shadow: inset 5px 5px 15px rgba(255,255,255,0.1), inset -5px -5px 15px rgba(0,0,0,0.5), 10px 10px 30px rgba(0,0,0,0.8);
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            border: 4px solid #2c2c2e;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .e-stop {
+            width: 55px;
+            height: 55px;
+            background: radial-gradient(circle at 30% 30%, #ff4d4d, #cc0000);
+            border-radius: 50%;
+            border: 3px solid #800000;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.6);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 9px;
+            text-align: center;
+        }
+        .e-stop:active { transform: scale(0.95); box-shadow: 0 2px 5px rgba(0,0,0,0.6); }
+
+        .power-switch {
+            background: #222;
+            color: #00ff00;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 11px;
+            border: 1px solid #555;
+            cursor: pointer;
+        }
+        .power-switch.off { color: #555; }
+
+        .lcd-screen {
+            background-color: #9ea792;
+            color: #1a1a1a;
+            font-family: 'Share Tech Mono', monospace;
+            border: 6px solid #111;
+            border-radius: 4px;
+            padding: 8px;
+            height: auto; 
+            min-height: 200px;
+            box-shadow: inset 2px 2px 10px rgba(0,0,0,0.4);
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .status-bar {
+            font-size: 11px;
+            border-bottom: 2px solid #1a1a1a;
+            padding-bottom: 3px;
+            display: flex;
+            justify-content: space-between;
+            font-weight: bold;
+        }
+
+        .data-lines { font-size: 15px; line-height: 1.3; margin-top: 5px; }
+        .coord-label { font-weight: bold; margin-right: 8px; }
+        
+        .system-msg {
+            background: #1a1a1a;
+            color: #9ea792;
+            padding: 3px;
+            font-size: 10px;
+            text-align: center;
+            margin-top: 5px;
+        }
+
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            flex-grow: 1;
+            background: #2c2c2e;
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid #555;
+        }
+
+        .key {
+            background: linear-gradient(to bottom, #3b82f6, #1d4ed8);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            font-size: 13px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #1e3a8a;
+            height: 50px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation; 
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .key:active { transform: translateY(4px); box-shadow: 0 0 0 #1e3a8a; }
+        .key span { font-size: 8px; opacity: 0.8; margin-top: 1px; }
+
+        .key.grey { background: linear-gradient(to bottom, #6b7280, #4b5563); box-shadow: 0 4px 0 #374151; }
+        .key.dark-grey { background: linear-gradient(to bottom, #4b5563, #374151); box-shadow: 0 4px 0 #1f2937; font-size: 10px; }
+        .key.yellow { background: linear-gradient(to bottom, #eab308, #ca8a04); box-shadow: 0 4px 0 #854d0e; color: black; }
+        .key.green { background: linear-gradient(to bottom, #22c55e, #15803d); box-shadow: 0 4px 0 #14532d; }
+        .key.red { background: linear-gradient(to bottom, #ef4444, #b91c1c); box-shadow: 0 4px 0 #7f1d1d; }
+
+        .span-2 { grid-column: span 2; }
+        
+        .speed-display {
+            background: #111;
+            color: #00ffcc;
+            font-family: 'Share Tech Mono', monospace;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            border: 1px solid #555;
+            font-size: 16px;
+            box-shadow: inset 0 0 5px rgba(0,255,204,0.2);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="pendant-case">
+        <div class="top-bar">
+            <div class="e-stop" onclick="emergencia()">E-STOP</div>
+            <div id="pwrBtn" class="power-switch" onclick="togglePower()">⚡ MOTOR OFF</div>
+        </div>
+
+        <div class="lcd-screen">
+            <div class="status-bar">
+                <span id="wifiStatus">WiFi: OK</span>
+                <span id="speedOvr">SPEED: 50%</span>
+            </div>
+            <div style="font-size: 10px; text-align: right; border-bottom: 1px solid #1a1a1a; margin-bottom: 5px;">
+                <span id="ipDisplay">IP: ...</span>
+            </div>
+            
+            <div class="data-lines">
+                <div><span class="coord-label">J1:</span> <span id="lcd-q1">0.0</span>°</div>
+                <div><span class="coord-label">J2:</span> <span id="lcd-q2">0.0</span>°</div>
+                <div><span class="coord-label">J3 :</span> <span id="lcd-z">0.0</span> cm</div>
+                <hr style="border-color: #1a1a1a; opacity: 0.3; margin: 3px 0;">
+                <div><span class="coord-label">X:</span> <span id="lcd-x">0.00</span></div>
+                <div><span class="coord-label">Y:</span> <span id="lcd-y">0.00</span></div>
+            </div>
+
+            <div class="system-msg" id="sysMsg">SISTEM READY</div>
+        </div>
+
+        <div class="keypad">
+            <!-- CONTROL VELOCIDAD -->
+            <button class="key dark-grey" onclick="changeSpeed(-5)">SPEED<br>▼</button>
+            <div class="speed-display" id="keypadSpeed">50%</div>
+            <button class="key dark-grey" onclick="changeSpeed(5)">SPEED<br>▲</button>
+
+            <!-- EJE J1 -->
+            <button class="key" 
+                onmousedown="startJog('q1', 1, event)" onmouseup="stopJog(event)" onmouseleave="stopJog(event)"
+                ontouchstart="startJog('q1', 1, event)" ontouchend="stopJog(event)">
+                J1+<br><span>(Left)</span>
+            </button>
+            
+            <button class="key grey" onclick="goHome()">HOME</button>
+            
+            <button class="key" 
+                onmousedown="startJog('q1', -1, event)" onmouseup="stopJog(event)" onmouseleave="stopJog(event)"
+                ontouchstart="startJog('q1', -1, event)" ontouchend="stopJog(event)">
+                J1-<br><span>(Rigth)</span>
+            </button>
+
+            <!-- EJE J2 -->
+            <button class="key" 
+                onmousedown="startJog('q2', 1, event)" onmouseup="stopJog(event)" onmouseleave="stopJog(event)"
+                ontouchstart="startJog('q2', 1, event)" ontouchend="stopJog(event)">
+                J2+<br><span>(Left)</span>
+            </button>
+            
+            <button class="key grey" onclick="resetToZero()">RESET</button>
+            
+            <button class="key" 
+                onmousedown="startJog('q2', -1, event)" onmouseup="stopJog(event)" onmouseleave="stopJog(event)"
+                ontouchstart="startJog('q2', -1, event)" ontouchend="stopJog(event)">
+                J2-<br><span>(Rigth)</span>
+            </button>
+
+            <!-- EJE Z -->
+            <button class="key" 
+                onmousedown="startJog('z', -1, event)" onmouseup="stopJog(event)" onmouseleave="stopJog(event)"
+                ontouchstart="startJog('z', -1, event)" ontouchend="stopJog(event)">
+                J3+<br><span>(Up)</span>
+            </button>
+            
+            <button class="key red" onclick="toggleGrip()">GRIPPER</button>
+            
+            <button class="key" 
+                onmousedown="startJog('z', 1, event)" onmouseup="stopJog(event)" onmouseleave="stopJog(event)"
+                ontouchstart="startJog('z', 1, event)" ontouchend="stopJog(event)">
+                J3-<br><span>(Down)</span>
+            </button>
+
+            <!-- Acciones -->
+            <button class="key yellow span-2" onclick="guardarPunto()">SAVE COORDINATE</button>
+            <button class="key green" onclick="ejecutarRutina()">RUN</button>
+        </div>
+    </div>
+
+<script>
+    const socket = io();
+
+    let currentQ1 = 0;
+    let currentQ2 = 0;
+    let currentZ = 0;
+    let gripState = 0;
+    let motorOn = false;
+    let jogInterval = null;
+    let teachEnabled = true;
+
+    let jogSpeedPercent = 50; 
+    const MAX_STEP_DEG = 5.0; 
+    const MAX_STEP_Z = 0.5;
+
+    // Bandera para evitar carrera de datos (Data Race)
+    let isJogging = false;
+
+    document.addEventListener('contextmenu', event => event.preventDefault());
+
+    socket.on('connect', () => {
+        document.getElementById('sysMsg').innerText = "ONLINE";
+        document.getElementById('wifiStatus').innerText = "WiFi: OK";
+        
+        // --- CAMBIO CLAVE: IDENTIFICACIÓN ---
+        socket.emit('register_pendant'); 
+        console.log("Enviada señal de registro PENDANT");
+        
+        socket.emit('request_status');
+    });
+
+    socket.on('disconnect', () => {
+        document.getElementById('sysMsg').innerText = "OFFLINE";
+        document.getElementById('wifiStatus').innerText = "WiFi: --";
+    });
+
+    socket.on('actualizar_gemelo', (data) => {
+        // Ignoramos actualizaciones mientras movemos manualmente
+        if (isJogging) return;
+
+        document.getElementById('lcd-q1').innerText = parseFloat(data.angulos.q1).toFixed(1);
+        document.getElementById('lcd-q2').innerText = parseFloat(data.angulos.q2).toFixed(1);
+        document.getElementById('lcd-z').innerText = parseFloat(data.angulos.z).toFixed(1);
+        if(data.coords) {
+            document.getElementById('lcd-x').innerText = data.coords.final.x.toFixed(2);
+            document.getElementById('lcd-y').innerText = data.coords.final.y.toFixed(2);
+        }
+        currentQ1 = parseFloat(data.angulos.q1);
+        currentQ2 = parseFloat(data.angulos.q2);
+        currentZ = parseFloat(data.angulos.z);
+    });
+
+    socket.on('server_status', (data) => {
+        document.getElementById('ipDisplay').innerText = "SVR IP: " + data.ip;
+    });
+
+    function changeSpeed(delta) {
+        jogSpeedPercent += delta;
+        if(jogSpeedPercent > 100) jogSpeedPercent = 100;
+        if(jogSpeedPercent < 5) jogSpeedPercent = 5;
+        document.getElementById('speedOvr').innerText = "SPEED: " + jogSpeedPercent + "%";
+        document.getElementById('keypadSpeed').innerText = jogSpeedPercent + "%";
+        socket.emit('cambiar_velocidad', { velocidad: jogSpeedPercent });
+    }
+
+    function startJog(axis, direction, event) {
+        if(event && event.cancelable) event.preventDefault();
+        if (!motorOn || !teachEnabled) return; 
+        if (jogInterval) return;
+
+        isJogging = true; // Bloqueamos actualizaciones externas
+
+        const doStep = () => {
+            let speedFactor = jogSpeedPercent / 100.0;
+            let stepSize = (axis === 'z' ? MAX_STEP_Z : MAX_STEP_DEG);
+            let finalStep = stepSize * speedFactor * direction;
+
+            if (axis === 'q1') currentQ1 += finalStep;
+            if (axis === 'q2') currentQ2 += finalStep;
+            if (axis === 'z') currentZ += finalStep;
+
+            if(currentQ1 > 85) currentQ1 = 85; if(currentQ1 < -90) currentQ1 = -90;
+            if(currentQ2 > 85) currentQ2 = 85; if(currentQ2 < -90) currentQ2 = -90;
+            if(currentZ > 5.5) currentZ = 5.5; if(currentZ < 0) currentZ = 0;
+
+            sendMove();
+        };
+
+        doStep();
+        jogInterval = setInterval(doStep, 40);
+    }
+
+    function stopJog(event) {
+        if(event && event.cancelable) event.preventDefault();
+        clearInterval(jogInterval);
+        jogInterval = null; 
+        
+        // Pequeño delay para asegurar que el server se sincronice antes de desbloquear
+        setTimeout(() => { isJogging = false; }, 200);
+    }
+
+    function sendMove() {
+        socket.emit('comando_manual', { 
+            q1: currentQ1, 
+            q2: currentQ2, 
+            z: currentZ, 
+            grip: gripState 
+        });
+        
+        // Actualización local inmediata para fluidez
+        document.getElementById('lcd-q1').innerText = currentQ1.toFixed(1);
+        document.getElementById('lcd-q2').innerText = currentQ2.toFixed(1);
+        document.getElementById('lcd-z').innerText = currentZ.toFixed(1);
+    }
+
+    function toggleGrip() {
+        if (!motorOn || !teachEnabled) return;
+        gripState = gripState === 0 ? 1 : 0;
+        sendMove();
+        document.getElementById('sysMsg').innerText = gripState ? "GRIPPER: CLOSED" : "GRIPPER: OPEN";
+    }
+
+    function togglePower() {
+        motorOn = !motorOn;
+        const btn = document.getElementById('pwrBtn');
+        if (motorOn) {
+            btn.classList.remove('off');
+            btn.innerHTML = "⚡ MOTOR ON";
+            btn.style.color = "#00ff00";
+            document.getElementById('sysMsg').innerText = "ENABLED POWER";
+        } else {
+            btn.classList.add('off');
+            btn.innerHTML = "⚡ MOTOR OFF";
+            btn.style.color = "#555";
+            document.getElementById('sysMsg').innerText = "CUT-OFF POWER";
+        }
+    }
+
+    // --- E-STOP ---
+    function emergencia() {
+        // Enviar señal al server siempre
+        socket.emit('emergency_stop');
+        
+        if(teachEnabled) {
+            // Entrando en Emergencia
+            teachEnabled = false;
+            stopJog();
+            motorOn = false;
+            document.getElementById('sysMsg').innerText = "!!! EMERGENCY STOP !!!";
+            document.getElementById('sysMsg').style.backgroundColor = "red";
+            document.getElementById('sysMsg').style.color = "white";
+        } else {
+            // Saliendo de Emergencia
+            teachEnabled = true;
+            document.getElementById('sysMsg').innerText = "SYSTEM READY";
+            document.getElementById('sysMsg').style.backgroundColor = "#1a1a1a";
+            document.getElementById('sysMsg').style.color = "#9ea792";
+        }
+    }
+
+    function resetToZero() {
+        if (!motorOn || !teachEnabled) return;
+        currentQ1 = 0; currentQ2 = 0; currentZ = 0;
+        sendMove();
+        socket.emit('borrar_rutina');
+        document.getElementById('sysMsg').innerText = "DELETED ROUTINE";
+        setTimeout(()=> document.getElementById('sysMsg').innerText="SYSTEM READY", 1500);
+    }
+
+    function goHome() {
+        if (!motorOn || !teachEnabled) return;
+        const steps = 50;
+        let stepCount = 0;
+        // Interpolación simple local para HOME
+        const delta = { q1: (0-currentQ1)/steps, q2: (0-currentQ2)/steps, z: (0-currentZ)/steps };
+        
+        const moveStep = () => {
+            if(stepCount >= steps) return;
+            currentQ1 += delta.q1;
+            currentQ2 += delta.q2;
+            currentZ  += delta.z;
+            sendMove();
+            stepCount++;
+            requestAnimationFrame(moveStep);
+        };
+        moveStep();
+    }
+
+    function guardarPunto() {
+        if(!teachEnabled) return;
+        socket.emit('guardar_punto', { q1: currentQ1, q2: currentQ2, z: currentZ, grip: gripState });
+        document.getElementById('sysMsg').innerText = "SAVE COORDINATE";
+        setTimeout(() => document.getElementById('sysMsg').innerText = "SYSTEM READY", 1000);
+    }
+
+    function ejecutarRutina() {
+        if (!motorOn || !teachEnabled) { alert("Enciende motores o desactiva E-STOP"); return; }
+        socket.emit('ejecutar_rutina');
+        document.getElementById('sysMsg').innerText = "RUNNING...";
+    }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SCARA | GEMELO DIGITAL</title>
+    <style>
+        /* --- ESTILO GENERAL TIPO HUD --- */
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background-color: #0b0f19; /* Fondo muy oscuro, casi negro azulado */
+            font-family: 'Segoe UI', sans-serif; 
+            color: #e2e8f0; 
+        }
+
+        /* Fuente técnica para datos */
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+        .tech-font { font-family: 'Share Tech Mono', monospace; }
+
+        /* --- BARRA SUPERIOR (HEADER) --- */
+        .top-hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 70px;
+            background: rgba(15, 23, 42, 0.9);
+            border-bottom: 2px solid #334155;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            box-sizing: border-box;
+            z-index: 100;
+            backdrop-filter: blur(5px);
+        }
+
+        .hud-title {
+            font-family: 'Share Tech Mono', monospace;
+            font-size: 28px;
+            color: #34d399;
+            text-shadow: 0 0 10px rgba(52, 211, 153, 0.4);
+            letter-spacing: 2px;
+            text-align: center;
+            flex-grow: 1; /* Ocupa el espacio central */
+            border-left: 1px solid #334155;
+            border-right: 1px solid #334155;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* --- GRUPO DE INDICADORES LED --- */
+        .indicators-group {
+            display: flex;
+            gap: 25px; /* Más espacio entre LEDs */
+            min-width: 320px; /* Ancho mínimo para que quepan 3 */
+        }
+        .indicators-group.left { justify-content: flex-start; }
+        .indicators-group.right { justify-content: flex-end; }
+
+        .led-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .led-label {
+            font-size: 9px;
+            color: #94a3b8;
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+        }
+
+        /* ESTILOS DE LEDS REALISTAS */
+        .led {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background-color: #333; /* Estado apagado */
+            border: 1px solid #555;
+            box-shadow: inset 1px 1px 3px rgba(0,0,0,0.5);
+            transition: all 0.2s;
+        }
+
+        /* Colores Encendidos */
+        .led.on-green {
+            background-color: #00ff00;
+            box-shadow: 0 0 10px #00ff00, inset -2px -2px 5px rgba(0,0,0,0.2);
+            border-color: #00cc00;
+        }
+        .led.on-blue {
+            background-color: #00ccff;
+            box-shadow: 0 0 10px #00ccff, inset -2px -2px 5px rgba(0,0,0,0.2);
+            border-color: #0099cc;
+        }
+        .led.on-yellow {
+            background-color: #ffcc00;
+            box-shadow: 0 0 10px #ffcc00, inset -2px -2px 5px rgba(0,0,0,0.2);
+            border-color: #cc9900;
+            animation: blink 1s infinite; /* Parpadeo para rutina */
+        }
+        .led.on-red {
+            background-color: #ff0000;
+            box-shadow: 0 0 15px #ff0000, inset -2px -2px 5px rgba(0,0,0,0.2);
+            border-color: #cc0000;
+            animation: blink-fast 0.5s infinite; /* Parpadeo rápido emergencia */
+        }
+        .led.on-purple {
+            background-color: #9900ff;
+            box-shadow: 0 0 15px #9900ff, inset -2px -2px 5px rgba(0,0,0,0.2);
+            border-color: #9900ff;
+        }
+
+        @keyframes blink { 50% { opacity: 0.5; } }
+        @keyframes blink-fast { 50% { opacity: 0.3; } }
+
+        /* --- PANELES FLOTANTES LATERALES --- */
+        .hud-panel {
+            position: absolute; 
+            background: rgba(11, 15, 25, 0.85);
+            border: 1px solid #334155; 
+            border-left: 4px solid #34d399; /* Acento verde */
+            border-radius: 4px;
+            padding: 15px; 
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5);
+            /* pointer-events: none;  <-- REMOVIDO PARA PERMITIR CLICKS EN IK */
+            backdrop-filter: blur(4px);
+            transition: border-color 0.3s;
+        }
+
+        #info-box { top: 90px; left: 20px; width: 280px; pointer-events: none; }
+        #matrix-box { bottom: 20px; right: 20px; width: 320px; border-left: none; border-right: 4px solid #34d399; pointer-events: none; }
+        
+        h2 { 
+            margin: 0 0 10px 0; 
+            font-size: 16px; 
+            color: #34d399; 
+            border-bottom: 1px solid #334155; 
+            padding-bottom: 5px; 
+            text-transform: uppercase; 
+            letter-spacing: 1px;
+        }
+
+        .data-row { 
+            display: flex; 
+            justify-content: space-between; 
+            margin-bottom: 6px; 
+            font-size: 15px; 
+            align-items: center;
+        }
+        
+        .label { color: #94a3b8; font-size: 13px; }
+        .val { color: #facc15; font-weight: bold; font-size: 16px; text-shadow: 0 0 5px rgba(250, 204, 21, 0.3); }
+        .val-large { font-size: 20px; color: #38bdf8; } /* Para velocidad */
+
+        /* Matriz Style */
+        .matrix-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px;
+            font-size: 12px; text-align: right;
+        }
+        .mat-cell { background: #1e293b; padding: 4px; border-radius: 2px; color: #94a3b8; border: 1px solid #334155; }
+        .mat-cell.highlight { color: #34d399; font-weight: bold; border-color: #34d399; background: rgba(52, 211, 153, 0.1); } 
+
+        /* ================================================== */
+        /* === ESTILOS NUEVOS AGREGADOS PARA EL PANEL IK === */
+        /* ================================================== */
+        
+        /* Panel IK (Arco Natural) */
+        #ik-box { top: 420px; left: 20px; width: 280px; pointer-events: auto; }
+        
+        /* Panel LINEAL (Nuevo) - Posicionado debajo del IK */
+        #linear-box { top: 660px; left: 20px; width: 280px; pointer-events: auto; border-left-color: #06b6d4; }
+        #linear-box h2 { color: #06b6d4; } /* Titulo azul cian */
+
+        .ik-inputs { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+        .input-group { display: flex; justify-content: space-between; align-items: center; }
+        .input-group label { color: #34d399; font-size: 14px; }
+        .input-group input { 
+            background: #1e293b; border: 1px solid #334155; color: #facc15; 
+            width: 100px; padding: 4px; text-align: right; font-family: 'Share Tech Mono';
+            outline: none;
+        }
+        .input-group input:focus { border-color: #facc15; }
+        
+        /* Boton IK Normal (Verde) */
+        .btn-ik {
+            width: 100%; padding: 8px; background: rgba(52, 211, 153, 0.1); 
+            border: 1px solid #34d399; color: #34d399; font-family: 'Share Tech Mono'; font-size: 14px;
+            cursor: pointer; transition: all 0.2s; text-transform: uppercase; font-weight: bold;
+        }
+        .btn-ik:hover { background: #34d399; color: #0f172a; box-shadow: 0 0 15px rgba(52, 211, 153, 0.4); }
+        .btn-ik:active { transform: translateY(2px); }
+
+        /* Boton Lineal (Azul) */
+        .btn-linear {
+            width: 100%; padding: 8px; background: rgba(6, 182, 212, 0.1); 
+            border: 1px solid #06b6d4; color: #06b6d4; font-family: 'Share Tech Mono'; font-size: 14px;
+            cursor: pointer; transition: all 0.2s; text-transform: uppercase; font-weight: bold;
+        }
+        .btn-linear:hover { background: #06b6d4; color: #0f172a; box-shadow: 0 0 15px rgba(6, 182, 212, 0.4); }
+        .btn-linear:active { transform: translateY(2px); }
+        /* ================================================== */
+
+    </style>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script type="importmap">
+        { "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js", "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/" } }
+    </script>
+</head>
+<body>
+
+    <div class="top-hud">
+        <div class="indicators-group left" style="width: auto;">
+            
+            <div class="led-box">
+                <div id="led-server" class="led"></div>
+                <span class="led-label">SERVER</span>
+            </div>
+
+            <div class="led-box">
+                <div id="led-robot" class="led"></div>
+                <span class="led-label">ROBOT</span>
+            </div>
+
+            <div class="led-box">
+                <div id="led-pendant" class="led"></div>
+                <span class="led-label">PENDANT</span>
+            </div>
+
+        </div>
+
+        <div class="hud-title">SCARA ROBOT</div>
+
+        <div class="indicators-group right">
+            <div class="led-box">
+                <div id="led-rutina" class="led"></div>
+                <span class="led-label">RUNNING</span>
+            </div>
+            <div class="led-box">
+                <div id="led-estop" class="led"></div>
+                <span class="led-label" style="color:#ef4444; font-weight:bold;">E-STOP</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="info-box" class="hud-panel tech-font">
+        <h2>PARAMETERS</h2>
+        
+        <div class="data-row">
+            <span class="label">SPEED:</span> 
+            <span id="textSpeed" class="val val-large">0%</span>
+        </div>
+        
+        <hr style="border-color: #334155; opacity: 0.5; margin: 10px 0;">
+
+        <div class="data-row"><span class="label">J1:</span> <span id="textQ1" class="val">0.00°</span></div>
+        <div class="data-row"><span class="label">J2:</span> <span id="textQ2" class="val">0.00°</span></div>
+        <div class="data-row"><span class="label">J3:</span> <span id="textZ" class="val">0.00 cm</span></div>
+        <div class="data-row"><span class="label">GRIPPER:</span> <span id="textGrip" class="val" style="color:white;">--</span></div>
+        
+        <hr style="border-color: #334155; opacity: 0.5; margin: 10px 0;">
+        
+        <div class="data-row"><span class="label">POS X:</span> <span id="textX" class="val">0.00</span></div>
+        <div class="data-row"><span class="label">POS Y:</span> <span id="textY" class="val">0.00</span></div>
+        <div class="data-row"><span class="label">POS Z:</span> <span id="textZ_world" class="val">0.00</span></div>
+    </div>
+
+    <div id="ik-box" class="hud-panel tech-font">
+        <h2>MOVIMIENTO LIBRE (JOINT)</h2>
+        
+        <div class="ik-inputs">
+            <div class="input-group">
+                <label>TARGET X:</label>
+                <input type="number" id="inpX" value="28.0" step="0.5">
+            </div>
+            <div class="input-group">
+                <label>TARGET Y:</label>
+                <input type="number" id="inpY" value="0.0" step="0.5">
+            </div>
+            <div class="input-group">
+                <label>TARGET Z:</label>
+                <input type="number" id="inpZ" value="0.0" step="0.5" max="4.3" min="0">
+            </div>
+        </div>
+
+        <button onclick="enviarIK()" class="btn-ik">MOVER (ARCO)</button>
+        <div id="ik-msg" style="margin-top:8px; font-size:11px; color:#64748b; text-align:center; height:15px;">SYSTEM READY</div>
+    </div>
+
+    <div id="linear-box" class="hud-panel tech-font">
+        <h2>MOVIMIENTO LINEAL</h2>
+        
+        <div class="ik-inputs">
+            <div class="input-group">
+                <label style="color:#06b6d4">LIN TGT X:</label>
+                <input type="number" id="linX" value="30.0" step="0.5" style="color:#06b6d4; border-color:#06b6d4;">
+            </div>
+            <div class="input-group">
+                <label style="color:#06b6d4">LIN TGT Y:</label>
+                <input type="number" id="linY" value="5.0" step="0.5" style="color:#06b6d4; border-color:#06b6d4;">
+            </div>
+            <div class="input-group">
+                <label style="color:#06b6d4">LIN TGT Z:</label>
+                <input type="number" id="linZ" value="0.0" step="0.5" max="4.3" min="0" style="color:#06b6d4; border-color:#06b6d4;">
+            </div>
+        </div>
+
+        <button onclick="enviarLineal()" class="btn-linear">MOVER (RECTO)</button>
+        <div id="lin-msg" style="margin-top:8px; font-size:11px; color:#64748b; text-align:center; height:15px;">WAITING CMD</div>
+    </div>
+    <div id="matrix-box" class="hud-panel tech-font">
+        <h2>MATRIZ DE TRANSFORMACIÓN (T)</h2>
+        <div class="matrix-grid" id="matrix-display">
+            <div class="mat-cell">1</div><div class="mat-cell">0</div><div class="mat-cell">0</div><div class="mat-cell highlight">0</div>
+            <div class="mat-cell">0</div><div class="mat-cell">1</div><div class="mat-cell">0</div><div class="mat-cell highlight">0</div>
+            <div class="mat-cell">0</div><div class="mat-cell">0</div><div class="mat-cell">1</div><div class="mat-cell highlight">0</div>
+            <div class="mat-cell">0</div><div class="mat-cell">0</div><div class="mat-cell">0</div><div class="mat-cell">1</div>
+        </div>
+        <div style="margin-top:10px; font-size:10px; color:#64748b; text-align:center;">
+            CINEMÁTICA DIRECTA CALCULADA EN TIEMPO REAL
+        </div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { STLLoader } from 'three/addons/loaders/STLLoader.js';
+
+        // --- 1. ESCENA ---
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0b0f19); // Match body background
+        scene.fog = new THREE.Fog(0x0b0f19, 80, 300);
+
+        const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(60, 60, 80);
+        camera.lookAt(0, 10, 0);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        document.body.appendChild(renderer.domElement);
+
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.target.set(0, 10, 0);
+
+        // Luces
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
+        dirLight.position.set(50, 100, 50);
+        dirLight.castShadow = true;
+        scene.add(dirLight);
+
+        // Suelo y Grid (Estilo Cyberpunk)
+        const gridHelper = new THREE.GridHelper(100, 20, 0x34d399, 0x1e293b);
+        scene.add(gridHelper);
+        const axesHelper = new THREE.AxesHelper(10);
+        scene.add(axesHelper);
+
+        // --- TRAZADO DE TRAYECTORIA ---
+        const MAX_TRAIL = 1000;
+        const trailGeo = new THREE.BufferGeometry();
+        const trailPos = new Float32Array(MAX_TRAIL * 3);
+        trailGeo.setAttribute('position', new THREE.BufferAttribute(trailPos, 3));
+        const trailMat = new THREE.LineBasicMaterial({ color: 0xf43f5e, linewidth: 3 });
+        const trailLine = new THREE.Line(trailGeo, trailMat);
+        scene.add(trailLine);
+
+        // --- 2. CINEMÁTICA Y PROPIEDADES ---
+        const KIN_L1 = 28.9818176;
+        const KIN_L2 = 12.4700356; 
+        const KIN_BASE_H = 13.6;
+        const KIN_Z_TRAVEL = 5.5;
+        const VIS_BASE_D = 14.0;
+        const VIS_BASE_H = 11.0;
+        const VIS_ARM1_H = 2.5;
+        const VIS_ARM2_H = 15.0; 
+        const VIS_BASE_BOX_W = 9.5;
+        const VIS_BASE_BOX_D = 4.0;
+        
+        const matYellow = new THREE.MeshStandardMaterial({ color: 0xffe01a, roughness: 0.6, metalness: 0.1 });
+        const matBlack = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.8, metalness: 0.1 });
+        const matSilver = new THREE.MeshStandardMaterial({ color: 0xcccccc, roughness: 0.2, metalness: 0.8 });
+        const matTube = new THREE.MeshStandardMaterial({ color: 0x050505, roughness: 0.8 });
+
+        // --- 3. GRUPOS Y GEOMETRÍAS BASE ---
+        const baseGroup = new THREE.Group();
+        // ** NUEVA POSICIÓN DEL GRUPO BASE CORREGIDA **
+        baseGroup.position.set(0.06407084, 0.00000000, -0.05865405);
+        scene.add(baseGroup);
+
+        const baseCylGeo = new THREE.CylinderGeometry(VIS_BASE_D/2, VIS_BASE_D/2, VIS_BASE_H, 32);
+        const baseCylMesh = new THREE.Mesh(baseCylGeo, matBlack);
+        baseCylMesh.position.y = VIS_BASE_H / 2;
+        baseGroup.add(baseCylMesh);
+        baseCylMesh.visible = false; 
+
+        const baseBoxGeo = new THREE.BoxGeometry(VIS_BASE_BOX_D, VIS_BASE_H, VIS_BASE_BOX_W);
+        const baseBoxMesh = new THREE.Mesh(baseBoxGeo, matBlack);
+        baseBoxMesh.position.y = VIS_BASE_H / 2;
+        baseBoxMesh.position.x = -(VIS_BASE_D/2) - (VIS_BASE_BOX_D/2);
+        baseGroup.add(baseBoxMesh);
+        baseBoxMesh.visible = false; 
+
+        const pivotQ1 = new THREE.Group();
+        pivotQ1.position.y = KIN_BASE_H; 
+        scene.add(pivotQ1);
+
+        const pivotQ2 = new THREE.Group();
+        pivotQ2.position.x = KIN_L1; 
+        pivotQ1.add(pivotQ2);
+
+        const zPistonGroup = new THREE.Group();
+        const z_retracted_y = (VIS_ARM2_H / 2) - (VIS_ARM1_H / 2);
+        zPistonGroup.position.x = KIN_L2; 
+        zPistonGroup.position.y = z_retracted_y;
+        pivotQ2.add(zPistonGroup);
+
+        const zRodVisualLength = KIN_Z_TRAVEL + (VIS_ARM2_H / 2);
+        const zRodGeo = new THREE.CylinderGeometry(1, 1, zRodVisualLength, 32);
+        const zRodMesh = new THREE.Mesh(zRodGeo, matBlack);
+        zRodMesh.position.y = -(zRodVisualLength / 2);
+        zPistonGroup.add(zRodMesh);
+        zRodMesh.visible = false; 
+
+        const gripperGroup = new THREE.Group();
+        gripperGroup.position.y = -zRodVisualLength;
+        zPistonGroup.add(gripperGroup);
+
+        // FUELLE (Cable)
+        const p1_base_anchor = new THREE.Object3D();
+        p1_base_anchor.position.set(2.4913, 8.2651, 7.0541); 
+        p1_base_anchor.rotation.set(-3.0834, 0.0000, 0.0000); 
+        baseGroup.add(p1_base_anchor);
+
+        const p3_head_anchor = new THREE.Object3D();
+        p3_head_anchor.position.set(0.0900, 14.0000, 0.1000); 
+        p3_head_anchor.rotation.set(-3.1294, 0.0000, 0.0000); 
+        pivotQ2.add(p3_head_anchor);
+
+        const tubePathInitial = new THREE.CatmullRomCurve3([
+            new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 10, 0), 
+            new THREE.Vector3(10, 10, 0), new THREE.Vector3(10, 0, 0)
+        ]);
+        let tubeMesh = new THREE.Mesh(new THREE.TubeGeometry(tubePathInitial, 20, 1.2, 8, false), matTube);
+        scene.add(tubeMesh);
+
+
+        // --- 4. STL LOADER CON COORDENADAS CORREGIDAS ---
+        const loader = new STLLoader();
+        function makeMeshFromSTL(geometry, material) {
+            geometry.computeVertexNormals();
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.castShadow = true;
+            mesh.receiveShadow = true;
+            return mesh;
+        }
+        const basePath = '/static/models/'; 
+
+        // 1) BASE CORREGIDA
+        loader.load(encodeURI(basePath + 'BASE.STL'), geometry => {
+            const mesh = makeMeshFromSTL(geometry, matBlack);
+            mesh.position.set(-8.97822321, 0.08975486, 8.09219703);
+            mesh.rotation.set(-1.57079633, 0.00000000, 0.00000000); // 90 grados X
+            mesh.scale.set(0.1, 0.1, 0.1); 
+            baseGroup.add(mesh);
+        });
+
+        // 2) ESLABON 1 CORREGIDO
+        loader.load(encodeURI(basePath + 'ESLABON1.STL'), geometry => {
+            const mesh = makeMeshFromSTL(geometry, matYellow);
+            mesh.position.set(-2.04580879, -2.07388049, 2.10588280); 
+            mesh.rotation.set(-1.56453459, 0.00322540, 0.00028688); 
+            mesh.scale.set(0.1, 0.1, 0.1); 
+            pivotQ1.add(mesh);
+        });
+
+        // 3) ESLABON 2 CORREGIDO
+        loader.load(encodeURI(basePath + 'ESLABON123.STL'), geometry => {
+            const mesh = makeMeshFromSTL(geometry, matYellow);
+            mesh.position.set(-27.39266117, -2.28102540, 1.92693333);
+            mesh.rotation.set(-1.55928971, -0.00962069, -0.01701746); 
+            mesh.scale.set(0.1, 0.1, 0.1); 
+            pivotQ2.add(mesh);
+        });
+
+        let gripperOpenMesh = null, gripperClosedMesh = null;
+        
+        // 4) GRIPPER ABIERTO CORREGIDO
+        loader.load(encodeURI(basePath + 'ESLABONFINAL.STL'), geometry => {
+            gripperOpenMesh = makeMeshFromSTL(geometry, matSilver);
+            gripperOpenMesh.position.set(-39.97702533, 2.43567520, 1.21721535); 
+            gripperOpenMesh.rotation.set(-1.54949239, 0.00000000, 0.00000000);
+            gripperOpenMesh.scale.set(0.1, 0.1, 0.1); 
+            gripperGroup.add(gripperOpenMesh);
+        });
+
+        // 5) GRIPPER CERRADO CORREGIDO
+        loader.load(encodeURI(basePath + 'ESLABONFINAL.STL'), geometry => {
+            gripperClosedMesh = makeMeshFromSTL(geometry, matSilver);
+            gripperClosedMesh.visible = false;
+            gripperClosedMesh.position.set(-39.97702533, 2.43567520, 1.21721535); 
+            gripperClosedMesh.rotation.set(-1.54949239, 0.00000000, 0.00000000);
+            gripperClosedMesh.scale.set(0.1, 0.1, 0.1); 
+            gripperGroup.add(gripperClosedMesh);
+        });
+
+        // --- 5. SOCKET.IO & ACTUALIZACIÓN ---
+        window.socket = io(); // MODIFICADO: Asignar a window para usar en enviarIK
+        
+        // Elementos LED (AHORA SON 3)
+        const ledServer = document.getElementById('led-server');
+        const ledRobot = document.getElementById('led-robot');
+        const ledPendant = document.getElementById('led-pendant');
+        const ledRutina = document.getElementById('led-rutina');
+        const ledEstop = document.getElementById('led-estop');
+
+        // 1. LED SERVIDOR: Se enciende cuando el socket conecta
+        window.socket.on('connect', () => { 
+            ledServer.classList.add('on-green'); 
+            console.log("Conectado al servidor SCARA");
+        });
+        
+        window.socket.on('disconnect', () => { 
+            // Si perdemos el server, apagamos TODOS los LEDs de conexión
+            ledServer.classList.remove('on-green');
+            ledRobot.classList.remove('on-green');
+            ledPendant.classList.remove('on-blue');
+            
+            // Y los de estado
+            ledRutina.classList.remove('on-yellow');
+            ledEstop.classList.remove('on-red');
+        });
+
+        // =============================================
+        // === NUEVO LISTENER PARA NOTIFICACIONES IK ===
+        // =============================================
+        window.socket.on('notificacion', (data) => {
+            // 1. Manejar panel IK normal
+            const msgBox = document.getElementById('ik-msg');
+            const box = document.getElementById('ik-box');
+            
+            // 2. Manejar panel LINEAL (Nuevo)
+            const linMsgBox = document.getElementById('lin-msg');
+            const linBox = document.getElementById('linear-box');
+
+            // Actualizamos texto en ambos para feedback global
+            msgBox.innerText = data.msg;
+            linMsgBox.innerText = data.msg;
+            
+            let color = "#34d399";
+            let borderCol = "#34d399";
+
+            if(data.type === 'error') {
+                color = "#ef4444"; 
+                borderCol = "#ef4444";
+            } else if (data.type === 'warning') {
+                color = "#f59e0b"; 
+                borderCol = "#f59e0b";
+            } else {
+                // Éxito
+                color = "#34d399"; 
+                borderCol = "#34d399";
+            }
+
+            msgBox.style.color = color;
+            box.style.borderColor = borderCol;
+            
+            // Para el lineal usamos azul cian si es éxito
+            if(data.type !== 'error' && data.type !== 'warning'){
+                 linMsgBox.style.color = "#06b6d4";
+                 linBox.style.borderColor = "#06b6d4";
+            } else {
+                 linMsgBox.style.color = color;
+                 linBox.style.borderColor = borderCol;
+            }
+
+            // Restaurar borde después de 1.5s
+            setTimeout(() => { 
+                box.style.borderColor = "#334155"; 
+                linBox.style.borderColor = "#334155";
+            }, 1500);
+        });
+        // =============================================
+
+        window.socket.on('actualizar_gemelo', (data) => {
+            if (!data || !data.angulos) return;
+
+            // Actualizar Telemetría Básica
+            document.getElementById('textQ1').innerText = parseFloat(data.angulos.q1).toFixed(2) + "°";
+            document.getElementById('textQ2').innerText = parseFloat(data.angulos.q2).toFixed(2) + "°";
+            document.getElementById('textZ').innerText  = parseFloat(data.angulos.z).toFixed(2) + " cm";
+            
+            const gripClosed = data.angulos.grip === 1;
+            const txtGrip = document.getElementById('textGrip');
+            txtGrip.innerText = gripClosed ? "CLOSED" : "OPEN";
+            txtGrip.style.color = gripClosed ? "#facc15" : "#34d399";
+
+            // Coordenadas y Matriz
+            if (data.coords && data.coords.final) {
+                document.getElementById('textX').innerText = data.coords.final.x.toFixed(2);
+                document.getElementById('textY').innerText = data.coords.final.y.toFixed(2);
+                document.getElementById('textZ_world').innerText = data.coords.final.z.toFixed(2);
+                
+                if (data.coords.matrix) {
+                    updateMatrixDisplay(data.coords.matrix);
+                }
+            }
+
+            // --- LÓGICA DE ESTADO ---
+            if (data.status) {
+                // A) VELOCIDAD
+                if (data.status.speed !== undefined) {
+                    document.getElementById('textSpeed').innerText = data.status.speed + "%";
+                }
+
+                // B) ESTADO DE LOS LEDS
+                
+                // 2. LED ROBOT FÍSICO (Heartbeat)
+                if (data.status.robot_connected) {
+                    ledRobot.classList.add('on-purple'); 
+                } else {
+                    ledRobot.classList.remove('on-purple'); 
+                }
+
+                // 3. LED TEACH PENDANT
+                if (data.status.pendant) {
+                    ledPendant.classList.add('on-blue');
+                } else {
+                    ledPendant.classList.remove('on-blue');
+                }
+
+                // E-STOP & RUTINA
+                if (data.status.estop) ledEstop.classList.add('on-red');
+                else ledEstop.classList.remove('on-red');
+
+                if (data.status.rutina) ledRutina.classList.add('on-yellow');
+                else ledRutina.classList.remove('on-yellow');
+            }
+
+            // Mover Robot 3D
+            const degToRad = Math.PI / 180;
+            pivotQ1.rotation.y = data.angulos.q1 * degToRad;
+            pivotQ2.rotation.y = data.angulos.q2 * degToRad;
+            zPistonGroup.position.y = z_retracted_y - data.angulos.z;
+
+            // Gripper Visual
+            if (gripperOpenMesh && gripperClosedMesh) {
+                gripperOpenMesh.visible = !gripClosed;
+                gripperClosedMesh.visible = gripClosed;
+            }
+
+            // Trail
+            const tcpWorldPos = new THREE.Vector3();
+            gripperGroup.getWorldPosition(tcpWorldPos);
+            tcpWorldPos.y -= 0.99; 
+            updateTrail(tcpWorldPos);
+        });
+
+        function updateMatrixDisplay(mat) {
+            const grid = document.getElementById('matrix-display');
+            grid.innerHTML = '';
+            mat.forEach((val, i) => {
+                const div = document.createElement('div');
+                div.className = 'mat-cell';
+                if (i === 3 || i === 7 || i === 11) div.classList.add('highlight');
+                div.innerText = val.toFixed(2);
+                grid.appendChild(div);
+            });
+        }
+
+        function updateTrail(pos) {
+            const positions = trailLine.geometry.attributes.position.array;
+            for (let i = 0; i < (MAX_TRAIL - 1) * 3; i++) {
+                positions[i] = positions[i + 3];
+            }
+            const idx = (MAX_TRAIL - 1) * 3;
+            positions[idx] = pos.x;
+            positions[idx+1] = pos.y;
+            positions[idx+2] = pos.z;
+            trailLine.geometry.attributes.position.needsUpdate = true;
+        }
+
+// --- ANIMACIÓN DEL CABLE (CURVA NATURAL BEZIER) ---
+        function getAnchorWorldPosition(anchorObject, offsetMultiplier) {
+            const worldPos = new THREE.Vector3();
+            anchorObject.getWorldPosition(worldPos);
+            const worldDir = new THREE.Vector3(0, -1, 0); 
+            worldDir.applyQuaternion(anchorObject.getWorldQuaternion(new THREE.Quaternion()));
+            return worldPos.add(worldDir.multiplyScalar(offsetMultiplier));
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+
+            // 1. Obtener posiciones de los anclajes (donde empieza y termina el cable)
+            // Ajusta el '3' si quieres que el cable salga más "adentro" o "afuera" del conector
+            const P1_world = getAnchorWorldPosition(p1_base_anchor, 3); 
+            const P2_world = getAnchorWorldPosition(p3_head_anchor, 3); 
+            
+            // 2. Calcular la distancia para saber cuánto debe "colgar"
+            const distance = P1_world.distanceTo(P2_world);
+            
+            // FACTOR DE GRAVEDAD:
+            // 0.5 = Curva moderada
+            // 0.8 = Cable muy pesado/largo (cuelga mucho)
+            // 0.3 = Cable tenso/corto
+            const sagFactor = 0.99; 
+
+            // 3. Calcular Puntos de Control (Gravedad simulada)
+            const controlPoint1 = P1_world.clone();
+            controlPoint1.y += distance * sagFactor * 0.6; // Subimos un poco para hacer el arco inicial
+            
+            const controlPoint2 = P2_world.clone();
+            controlPoint2.y += distance * sagFactor * 0.2; // Subimos para el arco final
+
+            // NOTA: Si quisieras que colgara hacia abajo estrictamente como una cadena floja,
+            // usarías -= en lugar de +=. Pero para un tubo corrugado que sale hacia ARRIBA
+            // (como en tu foto), los puntos de control deben estar ARRIBA para formar el arco.
+            
+            // Ajuste fino para que se parezca a tu foto (arco alto)
+            // Forzamos que los puntos de control estén siempre por encima de la altura máxima del robot
+            controlPoint1.y = Math.max(controlPoint1.y, 25); 
+            controlPoint2.y = Math.max(controlPoint2.y, 25);
+
+            const newPath = new THREE.CubicBezierCurve3(
+                P1_world,      // Inicio (Base)
+                controlPoint1, // Control 1 (Cima del arco lado base)
+                controlPoint2, // Control 2 (Cima del arco lado cabezal)
+                P2_world       // Fin (Cabezal)
+            );
+
+            tubeMesh.geometry.dispose();
+            tubeMesh.geometry = new THREE.TubeGeometry(newPath, 60, 0.9, 8, false); 
+
+            renderer.render(scene, camera);
+        }
+        
+        window.onload = animate;
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // =============================================
+        // === FUNCIONES GLOBALES PARA EL HTML (IK) ===
+        // =============================================
+        window.enviarIK = function() {
+            const x = document.getElementById('inpX').value;
+            const y = document.getElementById('inpY').value;
+            const z = document.getElementById('inpZ').value;
+            
+            // Feedback inmediato
+            document.getElementById('ik-msg').innerText = "CALCULANDO...";
+            document.getElementById('ik-msg').style.color = "#fbbf24";
+            
+            window.socket.emit('comando_ik', { x: x, y: y, z: z });
+        };
+
+        // NUEVA FUNCIÓN PARA EL PANEL LINEAL
+        window.enviarLineal = function() {
+            const x = document.getElementById('linX').value;
+            const y = document.getElementById('linY').value;
+            const z = document.getElementById('linZ').value;
+            
+            // Feedback inmediato en panel lineal
+            document.getElementById('lin-msg').innerText = "TRAZANDO...";
+            document.getElementById('lin-msg').style.color = "#06b6d4";
+            
+            window.socket.emit('comando_lineal', { x: x, y: y, z: z });
+        };
+        // =============================================
+
+    </script>
+    <div style="
+        position: absolute; 
+        bottom: 2px; 
+        width: 100%; 
+        text-align: center; 
+        font-family: 'Share Tech Mono', monospace; 
+        font-size: 13px; 
+        color: #4b5563; 
+        pointer-events: none;
+        opacity: 1.0;
+    ">
+        Este SCARA es producto de desvelos, un pacto con el diablo y la esquizofrenia del Gabo. No lo toques, no lo muevas y no lo veas, si falla es culpa del Juancho.
+    </div>
+</body>
+</html>
