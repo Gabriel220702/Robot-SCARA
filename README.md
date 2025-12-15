@@ -1,41 +1,71 @@
-# 🤖 SCARA RRP Robot & Digital Twin
-**Proyecto Integrador de Ingeniería Mecatrónica**
+# 🤖 **SCARA RRP - Gemelo Digital IoT** 🏭
 
-Este repositorio contiene el código fuente, modelos 3D y documentación de un Robot SCARA (Selective Compliance Assembly Robot Arm) de configuración RRP, diseñado desde cero. El sistema integra un **Gemelo Digital (Digital Twin)** que opera en tiempo real sincronizado con el robot físico.
+## 📌 **Autor:** Gabriel Carrizales  
+📍 **Institución:** Instituto Tecnológico Superior de la Región de los Llanos (ITSRLL)  
+🎓 **Carrera:** Ingeniería Mecatrónica  
 
-## 🚀 Características Principales
-* **Arquitectura IoT:** Comunicación bidireccional UDP/WebSockets entre el robot físico (ESP32) y el servidor de control.
-* **Gemelo Digital:** Visualización 3D en navegador web utilizando Three.js, mostrando la **Matriz de Transformación Homogénea** y trazado de trayectoria en vivo.
-* **Control Cinemático:**
-    * **Cinemática Directa (FK):** Cálculo de posición (X,Y,Z) basado en ángulos.
-    * **Cinemática Inversa (IK):** Algoritmo geométrico para alcanzar coordenadas específicas.
-    * **Planificación de Trayectoria:** Interpolación lineal y articular.
-* **Hardware Custom:** Diseño mecánico optimizado para impresión 3D (PLA/PETG) con gestión térmica activa.
+---
 
-## 🛠️ Stack Tecnológico
+## 📖 **Descripción del Proyecto** Este proyecto consiste en el diseño, construcción y control de un **Robot SCARA** (Selective Compliance Assembly Robot Arm) de configuración RRP. El sistema integra un **Gemelo Digital (Digital Twin)** que opera en tiempo real, permitiendo monitorear y controlar el robot físico desde una interfaz web.
 
-### Software
-* **Backend:** Python 3.x (Flask, NumPy para álgebra matricial).
-* **Frontend:** HTML5, JavaScript, Socket.IO, Three.js (Motor 3D).
-* **Firmware:** C++ (Arduino Framework) para ESP32-C3 Super Mini.
+Es una implementación completa de **Industria 4.0**, combinando diseño mecánico (CAD/CAM), cinemática avanzada, electrónica de potencia y arquitectura IoT Cliente-Servidor.
 
-### Hardware
-* **Actuadores:** Servomotor 70kg·cm (Base), MG996R (Codo), MG995 (Eje Z).
-* **Controlador:** ESP32-C3.
-* **Potencia:** Regulación dual (8V y 6V) con fuentes conmutadas XL4016.
+---
 
-## 📏 Especificaciones Técnicas
-| Parámetro | Valor |
+## 📂 **Características Principales** 🔹 **Arquitectura IoT Full-Stack** 🌐  
+- Comunicación bidireccional en tiempo real vía **UDP y WebSockets**.  
+- Sincronización milimétrica entre el robot físico y su réplica virtual.  
+
+🔹 **Gemelo Digital (Digital Twin)** 🖥️  
+- Visualización 3D interactiva en navegador web utilizando **Three.js**.  
+- Cálculo y visualización en vivo de la **Matriz de Transformación Homogénea (T)**.  
+- Trazado de trayectorias y delimitación del espacio de trabajo.  
+
+🔹 **Diseño Mecánico Personalizado** 🛠️  
+- Estructura optimizada para manufactura aditiva (Impresión 3D en PLA/PETG).  
+- Sistema de transmisión RRP (2 Grados de Libertad Rotacionales + 1 Lineal).  
+
+🔹 **Control Cinemático Avanzado** 📐  
+- **Cinemática Directa (FK):** Cálculo de coordenadas (X, Y, Z) en tiempo real.  
+- **Cinemática Inversa (IK):** Algoritmos geométricos para posicionamiento preciso.  
+- **Planificación de Trayectorias:** Interpolación lineal y articular.  
+
+---
+
+## 📊 **Especificaciones Técnicas** | Parámetro | Valor / Descripción |
 | :--- | :--- |
-| **Eslabón L1** | 29.5 cm |
-| **Eslabón L2** | 12.3 cm |
-| **Eje Z (Carrera)** | 5.5 cm |
-| **Grados de Libertad** | 3 (R-R-P) + Gripper |
-| **Comunicación** | WiFi (UDP + WebSockets) |
+| **Configuración** | SCARA RRP (3 GDL + Efector Final) |
+| **Eslabón L1** | 29.5 cm (Eje Base a Codo) |
+| **Eslabón L2** | 12.3 cm (Eje Codo a Muñeca) |
+| **Eje Z (Carrera)** | 5.5 cm (Actuador Lineal) |
+| **Capacidad de Carga** | ~250g (Payload) |
+| **Actuador Base** | Servo Alto Torque (70 kg·cm) |
 
-## 📸 Galería
-*(Aquí puedes subir tus fotos del robot y capturas del panel web)*
+---
 
-## 👨‍💻 Autor
-**Gabriel Carrizales**
-Ingeniería Mecatrónica
+## 💻 **Tecnologías Utilizadas** ✅ **Python (Flask)** – Backend y Servidor de Cálculo Cinemático  
+✅ **ESP32 (C++)** – Firmware del Controlador y Gestión de Hardware  
+✅ **Three.js / JavaScript** – Motor Gráfico para el Gemelo Digital  
+✅ **Socket.IO** – Protocolo de comunicación en tiempo real  
+✅ **SolidWorks** – Diseño CAD y validación mecánica  
+
+---
+
+## 👥 **Integrantes del Equipo** Proyecto desarrollado como integración de competencias de Ingeniería Mecatrónica, abarcando desde la manufactura hasta el desarrollo de software de control.
+
+---
+
+## 📩 **Contacto** Para dudas técnicas sobre la implementación del Gemelo Digital o el diseño mecánico:  
+
+📌 **GitHub:** [Gabriel220702](https://github.com/Gabriel220702)  
+📌 **LinkedIn:** [Gabriel Carrizales](https://www.linkedin.com/in/gabriel-carrizales-b64b1b33a)  
+
+---
+
+<p align="center">
+  <img src="https://via.placeholder.com/300x200?text=Robot+Fisico" width="280" alt="Robot Físico">
+  <img src="https://via.placeholder.com/300x200?text=Gemelo+Digital+Web" width="280" alt="Panel Web">
+  <img src="https://via.placeholder.com/300x200?text=CAD+SolidWorks" width="280" alt="Diseño CAD">
+</p> 
+
+🚀 **Ingeniería Mecatrónica aplicada a la Industria 4.0** 🦾⚡
