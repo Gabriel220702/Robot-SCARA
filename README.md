@@ -13,7 +13,8 @@ Es una implementación completa de **Industria 4.0**, combinando diseño mecáni
 
 ---
 
-## 📂 **Características Principales** 🔹 **Arquitectura IoT Full-Stack** 🌐  
+## 📂 **Características Principales** 🔹 
+**Arquitectura IoT Full-Stack** 🌐  
 - Comunicación bidireccional en tiempo real vía **UDP y WebSockets**.  
 - Sincronización milimétrica entre el robot físico y su réplica virtual.  
 
@@ -33,7 +34,8 @@ Es una implementación completa de **Industria 4.0**, combinando diseño mecáni
 
 ---
 
-## 📊 **Especificaciones Técnicas** | Parámetro | Valor / Descripción |
+## 📊 **Especificaciones Técnicas** 
+| Parámetro | Valor / Descripción |
 | :--- | :--- |
 | **Configuración** | SCARA RRP (3 GDL + Efector Final) |
 | **Eslabón L1** | 29.5 cm (Eje Base a Codo) |
@@ -44,7 +46,8 @@ Es una implementación completa de **Industria 4.0**, combinando diseño mecáni
 
 ---
 
-## 💻 **Tecnologías Utilizadas** ✅ **Python (Flask)** – Backend y Servidor de Cálculo Cinemático  
+## 💻 **Tecnologías Utilizadas** 
+✅ **Python (Flask)** – Backend y Servidor de Cálculo Cinemático  
 ✅ **ESP32 (C++)** – Firmware del Controlador y Gestión de Hardware  
 ✅ **Three.js / JavaScript** – Motor Gráfico para el Gemelo Digital  
 ✅ **Socket.IO** – Protocolo de comunicación en tiempo real  
@@ -52,11 +55,13 @@ Es una implementación completa de **Industria 4.0**, combinando diseño mecáni
 
 ---
 
-## 👥 **Integrantes del Equipo** Proyecto desarrollado como integración de competencias de Ingeniería Mecatrónica, abarcando desde la manufactura hasta el desarrollo de software de control.
+## 👥 **Integrantes del Equipo** 
+Proyecto desarrollado como integración de competencias de Ingeniería Mecatrónica, abarcando desde la manufactura hasta el desarrollo de software de control.
 
 ---
 
-## 📩 **Contacto** Para dudas técnicas sobre la implementación del Gemelo Digital o el diseño mecánico:  
+## 📩 **Contacto** 
+Para dudas técnicas sobre la implementación del Gemelo Digital o el diseño mecánico:  
 
 📌 **GitHub:** [Gabriel220702](https://github.com/Gabriel220702)  
 📌 **LinkedIn:** [Gabriel Carrizales](https://www.linkedin.com/in/gabriel-carrizales-b64b1b33a)  
