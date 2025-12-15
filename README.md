@@ -68,10 +68,4 @@ Para dudas técnicas sobre la implementación del Gemelo Digital o el diseño me
 
 ---
 
-<p align="center">
-  <img src="https://via.placeholder.com/300x200?text=Robot+Fisico" width="280" alt="Robot Físico">
-  <img src="https://via.placeholder.com/300x200?text=Gemelo+Digital+Web" width="280" alt="Panel Web">
-  <img src="https://via.placeholder.com/300x200?text=CAD+SolidWorks" width="280" alt="Diseño CAD">
-</p> 
-
 🚀 **Ingeniería Mecatrónica aplicada a la Industria 4.0** 🦾⚡
