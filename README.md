@@ -64,7 +64,7 @@ Proyecto desarrollado como integración de competencias de Ingeniería Mecatrón
 Para dudas técnicas sobre la implementación del Gemelo Digital o el diseño mecánico:  
 
 📌 **GitHub:** https://github.com/Gabriel220702  
-📌 **LinkedIn:** https://www.linkedin.com/in/carrizales-gabriel-62235632a/  
+📌 **LinkedIn:** https://www.linkedin.com/in/gabriel-carrizales/
 
 ---
 
